@@ -517,7 +517,7 @@
           <div class="card-body">
             <div class="settings-row">
               <label>デフォルト送料 (円)</label>
-              <input type="number" id="setting-default-shipping" value="750" onchange="saveSettings()">
+              <input type="number" id="setting-default-shipping" value="0" onchange="saveSettings()">
             </div>
             <div class="settings-row">
               <label>表示件数/ページ</label>
@@ -892,7 +892,7 @@ async function loadData() {
     if (settings.channels) {
       settings.channels.forEach((ch, i) => { if (CHANNELS[i]) CHANNELS[i].fee = ch.fee; });
     }
-    document.getElementById('setting-default-shipping').value = settings.defaultShipping ?? 750;
+    document.getElementById('setting-default-shipping').value = settings.defaultShipping ?? 0;
     const ps = document.getElementById('setting-page-size');
     if (ps) ps.value = settings.pageSize ?? 20;
   }
@@ -1437,7 +1437,7 @@ function openModal(id) {
   document.getElementById('f-sku').value = item?.sku || '';
   document.getElementById('f-buyPrice').value = item?.buyPrice || '';
   document.getElementById('f-sellPrice').value = item?.sellPrice || '';
-  document.getElementById('f-shipping').value = item?.shipping ?? (def.defaultShipping ?? 750);
+  document.getElementById('f-shipping').value = item?.shipping ?? (def.defaultShipping ?? 0);
   document.getElementById('f-feeRate').value = item?.feeRate || '';
   document.getElementById('f-status').value = item?.status || '在庫中';
   document.getElementById('f-store').value = item?.store || '';
