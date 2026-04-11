@@ -1712,14 +1712,15 @@ function renderStoreManager() {
   container.innerHTML = `
     <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">
       ${allStores.map((s, i) => `
-        <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #eee" data-idx="${i}">
+        <div style="display:flex;align-items:center;gap:4px;padding:6px 4px;border-bottom:1px solid #eee" data-idx="${i}">
           <span style="flex:1;font-size:13px">${esc(s)}</span>
+          <button class="btn btn-primary btn-sm" onclick="moveStoreToTop(${i})" ${i === 0 ? 'disabled' : ''} style="padding:2px 6px;font-size:11px">一番上</button>
           <button class="btn btn-secondary btn-sm" onclick="moveStore(${i},-1)" ${i === 0 ? 'disabled' : ''} style="padding:2px 8px">↑</button>
           <button class="btn btn-secondary btn-sm" onclick="moveStore(${i},1)" ${i === allStores.length - 1 ? 'disabled' : ''} style="padding:2px 8px">↓</button>
         </div>
       `).join('')}
     </div>
-    <p style="font-size:12px;color:var(--text-muted);margin-top:8px">↑↓ボタンで並び替え。よく使う店舗を上に移動してください。</p>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px">「一番上」で先頭に移動。↑↓で微調整。</p>
   `;
 }
 
@@ -1744,6 +1745,32 @@ function moveStore(idx, dir) {
   const newIdx = idx + dir;
   if (newIdx < 0 || newIdx >= allStores.length) return;
   [allStores[idx], allStores[newIdx]] = [allStores[newIdx], allStores[idx]];
+  saveStoreOrder(allStores);
+  rebuildStoreSelect();
+  renderStoreManager();
+}
+
+function moveStoreToTop(idx) {
+  const sel = document.getElementById('f-store-select');
+  const fixedStores = [];
+  if (sel) {
+    sel.querySelectorAll('option').forEach(o => {
+      if (o.value && o.value !== '__other__' && o.value !== '') fixedStores.push(o.value);
+    });
+  }
+  const customStores = getCustomStores().filter(s => !fixedStores.includes(s));
+  let allStores = [...fixedStores, ...customStores];
+
+  const order = getStoreOrder();
+  if (order.length > 0) {
+    const ordered = order.filter(s => allStores.includes(s));
+    const rest = allStores.filter(s => !order.includes(s));
+    allStores = [...ordered, ...rest];
+  }
+
+  if (idx <= 0 || idx >= allStores.length) return;
+  const item = allStores.splice(idx, 1)[0];
+  allStores.unshift(item);
   saveStoreOrder(allStores);
   rebuildStoreSelect();
   renderStoreManager();
