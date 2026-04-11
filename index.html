@@ -96,9 +96,9 @@
 
   /* Table */
   .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; table-layout: fixed; }
   thead th {
-    background: #f8fafc; padding: 9px 12px; text-align: left;
+    background: #f8fafc; padding: 9px 8px; text-align: left;
     border-bottom: 1px solid var(--border); font-weight: 600; white-space: nowrap;
     cursor: pointer; user-select: none; color: var(--text-muted); font-size: 12px;
   }
@@ -107,9 +107,21 @@
   thead th.sort-desc::after { content: ' ↓'; }
   tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
   tbody tr:hover { background: #f8fafc; }
-  tbody td { padding: 9px 12px; vertical-align: middle; }
+  tbody td { padding: 9px 8px; vertical-align: middle; word-break: break-word; }
   tbody td.profit-positive { color: var(--success); font-weight: 600; }
   tbody td.profit-negative { color: var(--danger); font-weight: 600; }
+  /* 列幅指定 */
+  table th:nth-child(1), table td:nth-child(1) { width: 80px; }
+  table th:nth-child(2), table td:nth-child(2) { width: 80px; }
+  table th:nth-child(3), table td:nth-child(3) { width: auto; }
+  table th:nth-child(4), table td:nth-child(4) { width: 70px; }
+  table th:nth-child(5), table td:nth-child(5) { width: 70px; }
+  table th:nth-child(6), table td:nth-child(6) { width: 65px; }
+  table th:nth-child(7), table td:nth-child(7) { width: 65px; }
+  table th:nth-child(8), table td:nth-child(8) { width: 50px; }
+  table th:nth-child(9), table td:nth-child(9) { width: 60px; }
+  table th:nth-child(10), table td:nth-child(10) { width: 90px; }
+  table th:nth-child(11), table td:nth-child(11) { width: 110px; }
 
   /* Badges */
   .badge {
@@ -428,20 +440,16 @@
           <table>
             <thead>
               <tr>
-                <th onclick="setSort('id')">ID</th>
                 <th onclick="setSort('purchaseDate')">仕入日</th>
                 <th onclick="setSort('saleDate')">販売日</th>
                 <th>商品名</th>
-                <th>型番/ASIN</th>
                 <th onclick="setSort('buyPrice')" class="text-right">仕入価格</th>
                 <th onclick="setSort('sellPrice')" class="text-right">販売価格</th>
                 <th>販路</th>
                 <th onclick="setSort('profit')" class="text-right">利益</th>
                 <th class="text-right">利益率</th>
-                <th class="text-right">回転日数</th>
                 <th>状態</th>
                 <th>仕入れ店舗</th>
-                <th>保管場所</th>
                 <th>操作</th>
               </tr>
             </thead>
@@ -1358,7 +1366,7 @@ function renderItemsPage() {
   document.getElementById('items-count').textContent = `商品一覧 (${total}件)`;
   const tbody = document.getElementById('items-tbody');
   if (pageItems.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="14"><div class="empty-state"><p>商品が見つかりません</p></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="11"><div class="empty-state"><p>商品が見つかりません</p></div></td></tr>';
   } else {
     tbody.innerHTML = pageItems.map(item => {
       const profitRate = item.sellPrice > 0 ? (item.profit / item.sellPrice * 100).toFixed(1) : '-';
@@ -1372,20 +1380,16 @@ function renderItemsPage() {
         if (diff >= 0) turnDays = diff + '日';
       }
       return `<tr>
-        <td class="text-muted">#${item.id}</td>
         <td>${item.purchaseDate || '-'}</td>
         <td>${item.saleDate || '-'}</td>
         <td><strong>${esc(item.name)}</strong>${item.sku ? `<br><span class="text-muted" style="font-size:11px">${esc(item.sku)}</span>` : ''}</td>
-        <td class="text-muted">${esc(item.sku)}</td>
         <td class="text-right">${fmt(item.buyPrice)}</td>
         <td class="text-right">${item.sellPrice ? fmt(item.sellPrice) : '-'}</td>
         <td>${esc(item.channel)}</td>
         <td class="text-right ${profitClass}">${fmt(item.profit)}</td>
         <td class="text-right">${profitRate !== '-' ? profitRate + '%' : '-'}</td>
-        <td class="text-right" style="color:${turnDays !== '-' ? 'var(--text-muted)' : 'inherit'}">${turnDays}</td>
         <td><span class="badge ${STATUS_BADGE[item.status] || ''}">${item.status}</span></td>
         <td class="text-muted">${esc(item.store)}</td>
-        <td class="text-muted">${esc(item.location)}</td>
         <td>
           <div class="flex gap-8">
             <button class="btn btn-secondary btn-sm" onclick="openModal('${item.dbId}')">編集</button>
