@@ -595,6 +595,10 @@
               <label style="color:var(--danger)">全データを削除</label>
               <button class="btn btn-danger btn-sm" onclick="clearAllData()">削除</button>
             </div>
+            <div class="divider"></div>
+            <h3 style="margin:16px 0 8px;font-size:15px">仕入れ店舗リスト管理</h3>
+            <p style="font-size:12px;color:var(--text-muted);margin-bottom:8px">よく使う店舗を上に移動できます。手入力した店舗は自動でリストに追加されます。</p>
+            <div id="store-manager"></div>
           </div>
         </div>
       </div>
@@ -1605,6 +1609,146 @@ function syncStoreSelect(storeName) {
   sel.value = found ? storeName : (storeName ? '__other__' : '');
 }
 
+// ========== 店舗リスト管理 ==========
+function getCustomStores() {
+  try { return JSON.parse(localStorage.getItem('sugi_custom_stores') || '[]'); } catch { return []; }
+}
+function saveCustomStores(list) {
+  localStorage.setItem('sugi_custom_stores', JSON.stringify(list));
+}
+function getStoreOrder() {
+  try { return JSON.parse(localStorage.getItem('sugi_store_order') || '[]'); } catch { return []; }
+}
+function saveStoreOrder(order) {
+  localStorage.setItem('sugi_store_order', JSON.stringify(order));
+}
+
+function addCustomStore(name) {
+  if (!name) return;
+  const list = getCustomStores();
+  if (!list.includes(name)) {
+    list.push(name);
+    saveCustomStores(list);
+  }
+}
+
+function rebuildStoreSelect() {
+  const sel = document.getElementById('f-store-select');
+  if (!sel) return;
+  const currentVal = document.getElementById('f-store')?.value || '';
+
+  // 既存の固定店舗リストを取得
+  const fixedStores = [];
+  const defaultOptions = sel.querySelectorAll('option');
+  defaultOptions.forEach(o => {
+    if (o.value && o.value !== '__other__' && o.value !== '') fixedStores.push(o.value);
+  });
+
+  // カスタム店舗を取得
+  const customStores = getCustomStores().filter(s => !fixedStores.includes(s));
+
+  // 全店舗リスト（固定＋カスタム）
+  let allStores = [...fixedStores, ...customStores];
+
+  // 並び順を適用
+  const order = getStoreOrder();
+  if (order.length > 0) {
+    const ordered = order.filter(s => allStores.includes(s));
+    const rest = allStores.filter(s => !order.includes(s));
+    allStores = [...ordered, ...rest];
+  }
+
+  // セレクト再構築
+  sel.innerHTML = '<option value="">-- リストから選ぶ --</option>';
+  allStores.forEach(name => {
+    const opt = document.createElement('option');
+    opt.value = name;
+    opt.textContent = name;
+    sel.appendChild(opt);
+  });
+  const otherOpt = document.createElement('option');
+  otherOpt.value = '__other__';
+  otherOpt.textContent = 'その他（直接入力）';
+  sel.appendChild(otherOpt);
+
+  // 現在の値を復元
+  syncStoreSelect(currentVal);
+}
+
+// 商品保存時に店舗名をカスタムリストに追加
+function registerStoreIfNew(storeName) {
+  if (!storeName) return;
+  const sel = document.getElementById('f-store-select');
+  if (!sel) return;
+  const exists = [...sel.options].some(o => o.value === storeName && o.value !== '__other__');
+  if (!exists) {
+    addCustomStore(storeName);
+    rebuildStoreSelect();
+  }
+}
+
+// 設定画面：店舗リスト管理
+function renderStoreManager() {
+  const container = document.getElementById('store-manager');
+  if (!container) return;
+
+  const sel = document.getElementById('f-store-select');
+  const fixedStores = [];
+  if (sel) {
+    sel.querySelectorAll('option').forEach(o => {
+      if (o.value && o.value !== '__other__' && o.value !== '') fixedStores.push(o.value);
+    });
+  }
+  const customStores = getCustomStores().filter(s => !fixedStores.includes(s));
+  let allStores = [...fixedStores, ...customStores];
+
+  const order = getStoreOrder();
+  if (order.length > 0) {
+    const ordered = order.filter(s => allStores.includes(s));
+    const rest = allStores.filter(s => !order.includes(s));
+    allStores = [...ordered, ...rest];
+  }
+
+  container.innerHTML = `
+    <div style="max-height:400px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;padding:8px">
+      ${allStores.map((s, i) => `
+        <div style="display:flex;align-items:center;gap:8px;padding:6px 4px;border-bottom:1px solid #eee" data-idx="${i}">
+          <span style="flex:1;font-size:13px">${esc(s)}</span>
+          <button class="btn btn-secondary btn-sm" onclick="moveStore(${i},-1)" ${i === 0 ? 'disabled' : ''} style="padding:2px 8px">↑</button>
+          <button class="btn btn-secondary btn-sm" onclick="moveStore(${i},1)" ${i === allStores.length - 1 ? 'disabled' : ''} style="padding:2px 8px">↓</button>
+        </div>
+      `).join('')}
+    </div>
+    <p style="font-size:12px;color:var(--text-muted);margin-top:8px">↑↓ボタンで並び替え。よく使う店舗を上に移動してください。</p>
+  `;
+}
+
+function moveStore(idx, dir) {
+  const sel = document.getElementById('f-store-select');
+  const fixedStores = [];
+  if (sel) {
+    sel.querySelectorAll('option').forEach(o => {
+      if (o.value && o.value !== '__other__' && o.value !== '') fixedStores.push(o.value);
+    });
+  }
+  const customStores = getCustomStores().filter(s => !fixedStores.includes(s));
+  let allStores = [...fixedStores, ...customStores];
+
+  const order = getStoreOrder();
+  if (order.length > 0) {
+    const ordered = order.filter(s => allStores.includes(s));
+    const rest = allStores.filter(s => !order.includes(s));
+    allStores = [...ordered, ...rest];
+  }
+
+  const newIdx = idx + dir;
+  if (newIdx < 0 || newIdx >= allStores.length) return;
+  [allStores[idx], allStores[newIdx]] = [allStores[newIdx], allStores[idx]];
+  saveStoreOrder(allStores);
+  rebuildStoreSelect();
+  renderStoreManager();
+}
+
 function parseVoiceText(text) {
   // セグメント分割（句読点・読点・カンマ・改行）
   const segments = text.split(/[、。,，\n　]+/).map(s => s.trim()).filter(Boolean);
@@ -1796,6 +1940,7 @@ async function saveItem() {
   }
 
   closeModal();
+  registerStoreIfNew(item.store);
   renderItemsPage();
   populateChannelFilter();
 }
@@ -1832,6 +1977,7 @@ function renderFeeSettings() {
       </div>
     </div>
   `).join('');
+  renderStoreManager();
 }
 
 async function clearAllData() {
@@ -2463,6 +2609,7 @@ function closeSidebar() {
 async function init() {
   showPage('dashboard');
   await loadData();
+  rebuildStoreSelect();
 }
 init();
 </script>
