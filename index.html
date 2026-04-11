@@ -415,8 +415,8 @@
           <option value="">全販路</option>
         </select>
         <select class="filter-select" id="filter-sort" onchange="renderItems()">
-          <option value="id-desc">登録日(新→旧)</option>
-          <option value="id-asc">登録日(旧→新)</option>
+          <option value="purchaseDate-desc">仕入日(新→旧)</option>
+          <option value="purchaseDate-asc">仕入日(旧→新)</option>
           <option value="saleDate-asc">販売日(古→新)</option>
           <option value="saleDate-desc">販売日(新→古)</option>
           <option value="profit-desc">利益(高→低)</option>
@@ -1344,13 +1344,13 @@ function renderItems() {
 
 function renderItemsPage() {
   let filtered = getFilteredItems();
-  const sortVal = document.getElementById('filter-sort')?.value || 'id-desc';
+  const sortVal = document.getElementById('filter-sort')?.value || 'purchaseDate-desc';
   const [sKey, sDir] = sortVal.split('-');
-  const keyMap = { id: 'id', profit: 'profit', buy: 'buyPrice', sell: 'sellPrice', saleDate: 'saleDate' };
+  const keyMap = { id: 'id', profit: 'profit', buy: 'buyPrice', sell: 'sellPrice', saleDate: 'saleDate', purchaseDate: 'purchaseDate' };
   const realKey = keyMap[sKey] || 'id';
   filtered.sort((a, b) => {
     let av = a[realKey], bv = b[realKey];
-    if (sKey === 'saleDate') {
+    if (sKey === 'saleDate' || sKey === 'purchaseDate') {
       if (!av && !bv) return 0;
       if (!av) return 1;
       if (!bv) return -1;
